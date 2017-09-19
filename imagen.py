@@ -78,13 +78,13 @@ def ajuste_histograma(histograma, imagen, umbral):
 			break
 	#print "limite derecho: ", limite_der, "limite_izq: ", limite_izq
 
-	for linea in imagen:
-		for pixel in linea:
-			if(pixel[0] < umbral):
-				if (pixel[0] >= limite_der):
-					pixel[0:] = 255
-				elif (pixel[0] <= limite_izq):
-					pixel[0:] = 0
+	#for linea in imagen:
+	#	for pixel in linea:
+	#		if(pixel[0] < umbral):
+	#			if (pixel[0] >= limite_der):
+	#				pixel[0:] = 255
+	#			elif (pixel[0] <= limite_izq):
+	#				pixel[0:] = 0
 	return [limite_izq, limite_der]
 
 
@@ -99,20 +99,20 @@ def volumen():
 		#print "media de misc ", im.mean(), "minimo de misc: ", im.min(), "maximo de misc: ", im.max()
 		#minimo = min_histograma(h)
 		copy = np.copy(im)		#se crea una copia de la imagen para poder comparar resultados 
-		ndimage.gaussian_filter(copy, 2)
+		ndimage.median_filter(copy, 3)
 		media = umbral_fondo(h, copy)
 		del_fondo(copy, media)
 		limites = ajuste_histograma(h, copy, int(media))
 		contraste(copy, limites[0], limites[1])
 		h1 = histograma(copy)
-		misc.imsave('Test/Resultados/gaussian_limites'+str(i)+'_pre.tif',copy)
+		misc.imsave('Test/Resultados/gaussian_limites'+str(i)+'.tif',copy)
 def programa():
 	im = misc.imread('Test/2.tif')	#se carga la imagen
 	h = histograma(im)		#se genera el array del histograma
 	#print "media de misc ", im.mean(), "minimo de misc: ", im.min(), "maximo de misc: ", im.max()
 	#minimo = min_histograma(h)
 	copy = np.copy(im)		#se crea una copia de la imagen para poder comparar resultados 
-	ndimage.gaussian_filter(copy, 2)
+	ndimage.median_filter(copy, 3)
 	media = umbral_fondo(h, copy)
 	del_fondo(copy, media)
 	limites = ajuste_histograma(h, copy, int(media))
@@ -138,7 +138,7 @@ def programa():
 	pl.imshow(copy)
 	pl.show()
 
-programa()
+volumen()
 
 #Aplicar suavizado inicial
 #recorte de contraste dinamico 2%-3%
