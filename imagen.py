@@ -105,7 +105,7 @@ def volumen():
 		limites = ajuste_histograma(h, copy, int(media))
 		contraste(copy, limites[0], limites[1])
 		h1 = histograma(copy)
-		misc.imsave('Test/Resultados/gaussian_limites'+str(i)+'.tif',copy)
+		misc.imsave('Test/Resultados/mediana_limites'+str(i)+'.tif',copy)
 def programa():
 	im = misc.imread('Test/2.tif')	#se carga la imagen
 	h = histograma(im)		#se genera el array del histograma
