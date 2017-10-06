@@ -1,14 +1,16 @@
 from scipy import misc, ndimage
 import pylab as pl
 import numpy as np
+import csv 
+import cv2
 
-
+temperatura = []
 
 
 def histograma(imagen):
 	#Se considera imagen en escala de grises
 	h = np.zeros((256), dtype=np.int)
-	data = np.zeros((256), dtype=np.int)
+	#data = np.zeros((256), dtype=np.int)
 	for linea in imagen:
 		for pixel in linea:
 			
@@ -78,15 +80,23 @@ def ajuste_histograma(histograma, imagen, umbral):
 			break
 	#print "limite derecho: ", limite_der, "limite_izq: ", limite_izq
 
-	#for linea in imagen:
-	#	for pixel in linea:
-	#		if(pixel[0] < umbral):
-	#			if (pixel[0] >= limite_der):
-	#				pixel[0:] = 255
-	#			elif (pixel[0] <= limite_izq):
-	#				pixel[0:] = 0
+	for linea in imagen:
+		for pixel in linea:
+			#if(pixel[0] < umbral):
+			if (pixel[0] >= limite_der):
+				pixel[0:] = 255
+			elif (pixel[0] <= limite_izq):
+				pixel[0:] = 0
 	return [limite_izq, limite_der]
-
+class Formatter(object):
+	    def __init__(self, im):
+	        self.im = im
+	        
+	    def __call__(self, x, y):
+	    	x = int(x)
+	    	y = int(y)
+	        t =  temperatura[y][x]
+	        return 'x={:d}, y={:d}, temp={:.01f}, z='.format(x, y, t)
 
 
 
@@ -94,51 +104,72 @@ def ajuste_histograma(histograma, imagen, umbral):
 #Programa principal ----------
 def volumen():
 	for i in range (1, 8):
-		im = misc.imread('Test/'+str(i)+'.tif')	#se carga la imagen
+		im = misc.imread('Test2/'+str(i)+'.tif')	#se carga la imagen
 		h = histograma(im)		#se genera el array del histograma
-		#print "media de misc ", im.mean(), "minimo de misc: ", im.min(), "maximo de misc: ", im.max()
-		#minimo = min_histograma(h)
-		copy = np.copy(im)		#se crea una copia de la imagen para poder comparar resultados 
-		ndimage.median_filter(copy, 3)
+		copy = cv2.GaussianBlur(im, (5,5), 0)
 		media = umbral_fondo(h, copy)
-		del_fondo(copy, media)
+		#del_fondo(copy, media)
 		limites = ajuste_histograma(h, copy, int(media))
 		contraste(copy, limites[0], limites[1])
 		h1 = histograma(copy)
-		misc.imsave('Test/Resultados/mediana_limites'+str(i)+'.tif',copy)
+		misc.imsave('Test2/Resultados/procesada'+str(i)+'.bmp',copy)
 def programa():
-	im = misc.imread('Test/2.tif')	#se carga la imagen
+	#Cargamos imagen
+	im = misc.imread('Test2/7.tif')	
+	#Cargamos archivo de la imagen
+	with open('Test2/7.csv', 'r') as f:
+	    reader = csv.reader(f, delimiter=',')
+	    for linea in reader:
+	        l = []
+	        for row in linea:
+	        	if (row != ' '):
+	        		l.append(float(row))
+	        temperatura.append(l)
+	print temperatura[0][1]
+	h2, ax = np.histogram(temperatura, bins = 100)
+
+
 	h = histograma(im)		#se genera el array del histograma
-	#print "media de misc ", im.mean(), "minimo de misc: ", im.min(), "maximo de misc: ", im.max()
-	#minimo = min_histograma(h)
-	copy = np.copy(im)		#se crea una copia de la imagen para poder comparar resultados 
-	ndimage.median_filter(copy, 3)
+
+	#copy = np.copy(im)		#se crea una copia de la imagen para poder comparar resultados 
+	copy = cv2.GaussianBlur(im, (5,5), 0)
+
+	#ndimage.gaussian_filter(copy, 3)
 	media = umbral_fondo(h, copy)
-	del_fondo(copy, media)
+	#del_fondo(copy, media)
 	limites = ajuste_histograma(h, copy, int(media))
 	contraste(copy, limites[0], limites[1])
 	h1 = histograma(copy)
-	#misc.imsave('Test/Resultados/gaussian_limites2_pre.tif',copy)
 
+	# Detectamos los bordes con Canny
+	canny = cv2.Canny(copy, 50, 150)
+
+	cv2.imshow("canny", canny)
+	#misc.imsave('Test/Resultados/gaussian_limites2_pre.tif',copy)
 	x = np.arange(0,256,1)	#se generan los valores 'x' de la grafica 
 	x1 = np.arange(0,int(media),1)	#se generan los valores 'x' de la grafica 
 	pl.subplot(312)
-	pl.plot(x,h)			#se grafica
+	pl.plot(x[:254],h[:254])			#se grafica
 	pl.grid()
 	pl.subplot(313)
-	pl.plot(x[:254],h1[:254])
+	pl.plot(ax[1:],h2)
 	pl.grid()				#anexamos un grid a la grafica
-	pl.subplot(321)
+	ax = pl.subplot(321)
 	pl.axis('off')
 	pl.title('Original')
-	pl.imshow(im)
-	pl.subplot(322)
+	img = pl.imshow(im)
+	ax.format_coord = Formatter(img)
+	ax1 = pl.subplot(322)
 	pl.axis('off')
 	pl.title('Resultado')
-	pl.imshow(copy)
+	img1 = pl.imshow(copy)
+	ax1.format_coord = Formatter(img1)
 	pl.show()
 
-volumen()
+programa()
 
 #Aplicar suavizado inicial
 #recorte de contraste dinamico 2%-3%
+
+#hacer analisis de temperaturas y sacar medida de tendensia central con desviacion estandar 
+#Obtener valores alojados en el area y aislarlos 
