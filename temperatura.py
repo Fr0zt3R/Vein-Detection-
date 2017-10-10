@@ -5,7 +5,8 @@ import csv
 import cv2
 import math
 from PIL import Image
-#Cargamos archivo de la imagen
+
+global maximo, minimo
 def valores(lista):
 	maximo = lista[0][0]
 	minimo = lista[0][0]
@@ -31,16 +32,26 @@ def histograma(lista):
 	l.sort()
 	#devolvemos una lista de tuplas ordenadas 
 	return l
-def divisor_arrays(lista, divisor):
+def divisor_arrays(lista, divisiones):
+	global maximo, minimo
 	#la lista contendra tuplas
-	menor = []
-	mayor = []
-	for i in lista:
-		if float(i[0]) < divisor:
-			menor.append(i)
+	arrays = []
+	contador = minimo
+	#calculamos el size de los arrays
+	n = (maximo - minimo) / divisiones
+	for i in range(0, divisiones):
+		contador = contador + n
+		a = []
+		if i == divisiones - 1:
+			while lista!=[]:
+
+				a.append(lista.pop(0))
 		else:
-			mayor.append(i)
-	return menor, mayor
+			while lista != [] and float(lista[0][0]) < contador:
+				a.append(lista.pop(0))
+		arrays.append(a)
+		
+	return arrays
 
 def medidas_estadisticas(lista):	
 	A = 0.0 
@@ -54,7 +65,7 @@ def medidas_estadisticas(lista):
 	#N = float(len(lista) * len(lista[0]))
 	media = 1/N * A
 	desviacion = math.sqrt(1/N * (B - (1/N) * A**2))
-	print "media y desviaicon: ", media, desviacion
+	
 	return media, desviacion
 
 
@@ -71,36 +82,41 @@ with open('Test2/3.csv', 'r') as f:
         temperatura.append(l)
 maximo, minimo = valores(temperatura)
 
-
-print "el total de datos es: ", len(temperatura) * len(temperatura[0])
+#numero de cortes de la imagen
+cortes = 3
+#Obtenemos la frecuencia de los datos
 h = histograma(temperatura)
+a = divisor_arrays(h,cortes)
 
-media, desviacion= medidas_estadisticas(h)
-inicio, fin = divisor_arrays(h, media)
-#calculamos las medidas de tendencia y desviacion del arreglo superiror a la media
-media_sup, desviacion_sup = medidas_estadisticas(fin)
-#calculamos los limites inferior y superiror de la media en base a la desviacion
-limite_inferior = media_sup - 0.1
-limite_superior = media_sup + 0.1
+for z in range(0, cortes):
+	
+	#calculamos las medidas de tendencia y desviacion del arreglo superiror a la media
+	media_sup, desviacion_sup = medidas_estadisticas(a[z])
+	#calculamos los limites inferior y superiror de la media en base a la desviacion
+	limite_inferior = media_sup - desviacion_sup
+	limite_superior = media_sup + desviacion_sup
 
-#Asignamos los valores ancho y largo de la imagen
-w, h = len(temperatura), len(temperatura[0])
-#Creamos la imagen con valores de 0
-data = np.zeros((w, h, 3), dtype=np.uint8)
-#recorremos el archivo de temperaturas y la imagen al mismo tiempo
-for i in range(0, len(temperatura)):
-	for j in range(0, len(temperatura[0])):
-		if (temperatura[i][j] > media_sup and temperatura[i][j] < limite_superior):
-			m = maximo -minimo
-			valor_pixel =int((temperatura[i][j] - minimo) * 255 / m)
-			print temperatura[i][j]
-			#print valor_pixel			
+	#Asignamos los valores ancho y largo de la imagen
+	w, h = len(temperatura), len(temperatura[0])
+	#Creamos la imagen con valores de 0
+	data = np.zeros((w, h, 3), dtype=np.uint8)
+	#recorremos el archivo de temperaturas y la imagen al mismo tiempo
+	for i in range(0, len(temperatura)):
+		for j in range(0, len(temperatura[0])):
+			if (temperatura[i][j] > limite_inferior and temperatura[i][j] < limite_superior):
+				valor_pixel = [255,0,0]
+				#m = maximo -minimo
+				#valor_pixel =int((temperatura[i][j] - minimo) * 255 / m)
+			else:
+				valor_pixel = [0,255,0]
+				#print valor_pixel			
 			data[i][j]= valor_pixel
-			
-img = Image.fromarray(data, 'RGB')
-print type(img)
-# Detectamos los bordes con Canny
-canny = cv2.Canny(data, 50, 150)
-misc.imsave('Test2/Resultados/canny'+str(i)+'.bmp',canny)
-cv2.imshow("canny", canny)
-img.show()
+	
+	misc.imsave('Test2/Resultados/Cortes/'+str(cortes)+'/corte'+str(z)+'.bmp',data)		
+	#img = Image.fromarray(data, 'RGB')
+
+	# Detectamos los bordes con Canny
+	#canny = cv2.Canny(data, 50, 150)
+	#misc.imsave('Test2/Resultados/canny'+str(i)+'.bmp',canny)
+	#cv2.imshow("canny", canny)
+	#img.show()

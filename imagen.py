@@ -44,7 +44,7 @@ def contraste(imagen, minimo, maximo):
 
 				pixel[0:] = int ( p * diferencia)
 				
-def umbral_fondo(h, im):	
+def estadisticas(h, im):	
 	A = 0.0 
 	B = 0.0
 	for g in range(0,256):
@@ -78,7 +78,6 @@ def ajuste_histograma(histograma, imagen, umbral):
 		if (histograma[i] < corte):
 			limite_der = i
 			break
-	#print "limite derecho: ", limite_der, "limite_izq: ", limite_izq
 
 	for linea in imagen:
 		for pixel in linea:
@@ -88,6 +87,7 @@ def ajuste_histograma(histograma, imagen, umbral):
 			elif (pixel[0] <= limite_izq):
 				pixel[0:] = 0
 	return [limite_izq, limite_der]
+
 class Formatter(object):
 	    def __init__(self, im):
 	        self.im = im
@@ -107,7 +107,7 @@ def volumen():
 		im = misc.imread('Test2/'+str(i)+'.tif')	#se carga la imagen
 		h = histograma(im)		#se genera el array del histograma
 		copy = cv2.GaussianBlur(im, (5,5), 0)
-		media = umbral_fondo(h, copy)
+		media = estadisticas(h, copy)
 		#del_fondo(copy, media)
 		limites = ajuste_histograma(h, copy, int(media))
 		contraste(copy, limites[0], limites[1])
@@ -115,9 +115,9 @@ def volumen():
 		misc.imsave('Test2/Resultados/procesada'+str(i)+'.bmp',copy)
 def programa():
 	#Cargamos imagen
-	im = misc.imread('Test2/7.tif')	
+	im = misc.imread('Test2/4.tif')	
 	#Cargamos archivo de la imagen
-	with open('Test2/7.csv', 'r') as f:
+	with open('Test2/4.csv', 'r') as f:
 	    reader = csv.reader(f, delimiter=',')
 	    for linea in reader:
 	        l = []
@@ -135,7 +135,7 @@ def programa():
 	copy = cv2.GaussianBlur(im, (5,5), 0)
 
 	#ndimage.gaussian_filter(copy, 3)
-	media = umbral_fondo(h, copy)
+	media = estadisticas(h, copy)
 	#del_fondo(copy, media)
 	limites = ajuste_histograma(h, copy, int(media))
 	contraste(copy, limites[0], limites[1])
@@ -149,10 +149,10 @@ def programa():
 	x = np.arange(0,256,1)	#se generan los valores 'x' de la grafica 
 	x1 = np.arange(0,int(media),1)	#se generan los valores 'x' de la grafica 
 	pl.subplot(312)
-	pl.plot(x[:254],h[:254])			#se grafica
+	pl.plot(x,h)			#se grafica
 	pl.grid()
 	pl.subplot(313)
-	pl.plot(ax[1:],h2)
+	pl.plot(x[:254],h1[:254])
 	pl.grid()				#anexamos un grid a la grafica
 	ax = pl.subplot(321)
 	pl.axis('off')
@@ -171,5 +171,5 @@ programa()
 #Aplicar suavizado inicial
 #recorte de contraste dinamico 2%-3%
 
-#hacer analisis de temperaturas y sacar medida de tendensia central con desviacion estandar 
+#hacer analisis de temperaturas y sacar medida de tendencia central con desviacion estandar 
 #Obtener valores alojados en el area y aislarlos 
