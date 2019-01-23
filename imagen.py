@@ -1,6 +1,7 @@
 from scipy import misc, ndimage
 import pylab as pl
 import numpy as np
+import cv2 
 
 
 
@@ -28,10 +29,6 @@ def contraste(imagen, minimo, maximo):
 	#Formula (pixel - pixelMenor) * (255/pixelMayor - pixelMenor)
 	#donde pixel mayor es igual al umbral 
 	diferencia = float(255) / float(maximo - minimo)
-	print "diferencia: ", diferencia
-	print "minimo: ", minimo
-	print "maximo: ", maximo
-
 	for linea in imagen:
 		for pixel in linea:
 			if (pixel[0] < maximo):
@@ -64,7 +61,8 @@ def ajuste_histograma(histograma, imagen, umbral):
 		if (histograma[i] > maximo[0]):
 			maximo = (histograma[i], i)
 		total_pixeles = total_pixeles + histograma[i]
-	corte = maximo[0] * 2 / 100
+	#Porcentaje de eliminacion de ruido
+	corte = maximo[0] * 5 / 100
 	#Calculamos los nuevos limites (izquierdo y derecho)
 	limite_izq = 0
 	limite_der = umbral 
@@ -76,8 +74,10 @@ def ajuste_histograma(histograma, imagen, umbral):
 		if (histograma[i] < corte):
 			limite_der = i
 			break
-	#print "limite derecho: ", limite_der, "limite_izq: ", limite_izq
-
+	
+	'''
+	Eliminar ruido de la imagen (Se elimina tambien el contorno de la mano)
+	'''
 	#for linea in imagen:
 	#	for pixel in linea:
 	#		if(pixel[0] < umbral):
@@ -111,14 +111,20 @@ def programa():
 	h = histograma(im)		#se genera el array del histograma
 	#print "media de misc ", im.mean(), "minimo de misc: ", im.min(), "maximo de misc: ", im.max()
 	#minimo = min_histograma(h)
-	copy = np.copy(im)		#se crea una copia de la imagen para poder comparar resultados 
-	ndimage.median_filter(copy, 3)
+	#copy = np.copy(im)		#se crea una copia de la imagen para poder comparar resultados 
+	copy = cv2.bilateralFilter(im,9,15,15)
+	#ndimage.median_filter(copy, 3)
 	media = umbral_fondo(h, copy)
 	del_fondo(copy, media)
 	limites = ajuste_histograma(h, copy, int(media))
 	contraste(copy, limites[0], limites[1])
 	h1 = histograma(copy)
-	#misc.imsave('Test/Resultados/gaussian_limites2_pre.tif',copy)
+	#blur = cv2.bilateralFilter(copy,9,50,50)
+	
+	#canny = cv2.Canny(copy,115,135)
+	
+	misc.imsave('Test/Resultados/canny.tif',copy)
+	#misc.imsave('Test/Resultados/prebilateral.tif',blur)
 
 	x = np.arange(0,256,1)	#se generan los valores 'x' de la grafica 
 	x1 = np.arange(0,int(media),1)	#se generan los valores 'x' de la grafica 
@@ -138,7 +144,8 @@ def programa():
 	pl.imshow(copy)
 	pl.show()
 
-volumen()
+programa()
+#volumen()
 
 #Aplicar suavizado inicial
 #recorte de contraste dinamico 2%-3%
