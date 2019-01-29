@@ -52,9 +52,9 @@ def umbral_fondo(h, im):
 		
 	N = float(len(im) * len(im[0]))
 	media = 1/N * A
-	varianza = 1/N * (B - (1/N) * A**2)
-	desviacion = math.sqrt(varianza)
-	print (media, varianza, desviacion)
+	#varianza = 1/N * (B - (1/N) * A**2)
+	#desviacion = math.sqrt(varianza)
+	#print (media, varianza, desviacion)
 	return media
 
 def ajuste_histograma(histograma, imagen, umbral):
@@ -150,6 +150,26 @@ def sup_up(n, im):
 			if (pixel[0] > n + 68):
 				pixel[0:] = 255
 
+def image_equalize(img):
+
+	w = len(img[0])
+	h = len(img)
+	M = float( w * h)
+	K = 255
+	h = histograma(img)
+	#compute the cumulative histogram:
+	for j in range(1, K-1):
+		h[j] = h[j-1] + h[j]
+	M = M - h[255]
+	#equalize the image:
+	for linea in img:
+		for pixel in linea:
+			if (pixel[0] < 255):
+				a = pixel[0]
+				b = h[a] * (K-2) / M
+				pixel[0:] = b
+	#return h
+
 
 #Programa principal ----------
 def volumen():
@@ -168,7 +188,9 @@ def volumen():
 		misc.imsave('Test/Resultados/mediana_limites'+str(i)+'.tif',copy)
 def programa():
 	im = misc.imread('Test/2.tif')	#se carga la imagen
-	
+	misc.imsave('Test/Resultados/otsu3/original.tif',im)
+	#h = image_equalize(im)
+	#misc.imsave('Test/Resultados/otsu2/equalizer.tif',im)
 	h = histograma(im)		#se genera el array del histograma
 	#print ("media de misc ", im.mean(), "minimo de misc: ", im.min(), "maximo de misc: ", im.max())
 	#minimo = min_histograma(h)
@@ -182,20 +204,21 @@ def programa():
 	if (media == -1):
 		return 
 	del_fondo(copy, media)
-	misc.imsave('Test/Resultados/otsu1/otsu.tif',copy)
+	misc.imsave('Test/Resultados/otsu3/otsu.tif',copy)
 	limites = ajuste_histograma(h, copy, int(media))
 	contraste(copy, limites[0], limites[1])
-	misc.imsave('Test/Resultados/otsu1/otsu_contraste.tif',copy)
+	misc.imsave('Test/Resultados/otsu3/otsu_contraste.tif',copy)
 	bi = cv.bilateralFilter(copy,9,15,15)
-	misc.imsave('Test/Resultados/otsu1/otsu_bilateral.tif',bi)
+	misc.imsave('Test/Resultados/otsu3/otsu_bilateral.tif',bi)
 	#img_grey = cv.cvtColor(bi, cv.COLOR_BGR2GRAY)
 	#misc.imsave('Test/Resultados/otsu_m.tif',copy)
 	#th2 = cv.adaptiveThreshold(img_grey,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY,101,7)
 	h1 = histograma(bi)
-	umbral2 = otsu(h1)
-	print ("El umbral para la segunda fase es: ", umbral2)
-	sup_up(umbral2, bi)
-	misc.imsave('Test/Resultados/otsu1/otsu_sup_2.tif',bi)
+	image_equalize(bi)
+	h2 = histograma(bi)
+	misc.imsave('Test/Resultados/otsu3/otsu_bilateral_equialize.tif',bi)
+	#sup_up(umbral2, bi)
+	#misc.imsave('Test/Resultados/otsu1/otsu_sup_2.tif',bi)
 	#blur = cv2.bilateralFilter(copy,9,50,50)
 	
 	#canny = cv2.Canny(copy,115,135)
@@ -206,10 +229,10 @@ def programa():
 	x = np.arange(0,256,1)	#se generan los valores 'x' de la grafica 
 	x1 = np.arange(0,int(media),1)	#se generan los valores 'x' de la grafica 
 	pl.subplot(312)
-	pl.plot(x,h)			#se grafica
+	pl.plot(x[:254],h1[:254])			#se grafica
 	pl.grid()
 	pl.subplot(313)
-	pl.plot(x[:254],h1[:254])
+	pl.plot(x[:254],h2[:254])
 	pl.grid()				#anexamos un grid a la grafica
 	pl.subplot(321)
 	pl.axis('off')
@@ -218,7 +241,7 @@ def programa():
 	pl.subplot(322)
 	pl.axis('off')
 	pl.title('Resultado')
-	pl.imshow(copy)
+	pl.imshow(bi)
 	pl.show()
 
 programa()
