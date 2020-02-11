@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from scipy import misc, ndimage
-import pylab as pl
+import matplotlib.pyplot as pl
 import numpy as np
 import cv2 as cv
 import math
-
-
 
 
 def histograma(imagen):
@@ -174,7 +172,7 @@ def image_equalize(img):
 #Programa principal ----------
 def volumen():
 	for i in range (1, 8):
-		im = misc.imread('Test/'+str(i)+'.tif')	#se carga la imagen
+		im = cv.imread('Test/'+str(i)+'.tif')	#se carga la imagen
 		h = histograma(im)		#se genera el array del histograma
 		#print ("media de misc ", im.mean(), "minimo de misc: ", im.min(), "maximo de misc: ", im.max())
 		#minimo = min_histograma(h)
@@ -185,12 +183,12 @@ def volumen():
 		limites = ajuste_histograma(h, copy, int(media))
 		contraste(copy, limites[0], limites[1])
 		h1 = histograma(copy)
-		misc.imsave('Test/Resultados/mediana_limites'+str(i)+'.tif',copy)
+		cv.imwrite('Test/Resultados/mediana_limites'+str(i)+'.tif',copy)
 def programa():
-	im = misc.imread('Test/2.tif')	#se carga la imagen
-	misc.imsave('Test/Resultados/otsu3/original.tif',im)
+	im = cv.imread('Test/2.tif')	#se carga la imagen
+	cv.imwrite('Test/Resultados/otsu3/original.tif',im)
 	#h = image_equalize(im)
-	#misc.imsave('Test/Resultados/otsu2/equalizer.tif',im)
+	#cv.imwrite('Test/Resultados/otsu2/equalizer.tif',im)
 	h = histograma(im)		#se genera el array del histograma
 	#print ("media de misc ", im.mean(), "minimo de misc: ", im.min(), "maximo de misc: ", im.max())
 	#minimo = min_histograma(h)
@@ -204,27 +202,27 @@ def programa():
 	if (media == -1):
 		return 
 	del_fondo(copy, media)
-	misc.imsave('Test/Resultados/otsu3/otsu.tif',copy)
+	cv.imwrite('Test/Resultados/otsu3/otsu.tif',copy)
 	limites = ajuste_histograma(h, copy, int(media))
 	contraste(copy, limites[0], limites[1])
-	misc.imsave('Test/Resultados/otsu3/otsu_contraste.tif',copy)
+	cv.imwrite('Test/Resultados/otsu3/otsu_contraste.tif',copy)
 	bi = cv.bilateralFilter(copy,9,15,15)
-	misc.imsave('Test/Resultados/otsu3/otsu_bilateral.tif',bi)
+	cv.imwrite('Test/Resultados/otsu3/otsu_bilateral.tif',bi)
 	#img_grey = cv.cvtColor(bi, cv.COLOR_BGR2GRAY)
-	#misc.imsave('Test/Resultados/otsu_m.tif',copy)
+	#cv.imwrite('Test/Resultados/otsu_m.tif',copy)
 	#th2 = cv.adaptiveThreshold(img_grey,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY,101,7)
 	h1 = histograma(bi)
 	image_equalize(bi)
 	h2 = histograma(bi)
-	misc.imsave('Test/Resultados/otsu3/otsu_bilateral_equialize.tif',bi)
+	cv.imwrite('Test/Resultados/otsu3/otsu_bilateral_equialize.tif',bi)
 	#sup_up(umbral2, bi)
-	#misc.imsave('Test/Resultados/otsu1/otsu_sup_2.tif',bi)
+	#cv.imwrite('Test/Resultados/otsu1/otsu_sup_2.tif',bi)
 	#blur = cv2.bilateralFilter(copy,9,50,50)
 	
 	#canny = cv2.Canny(copy,115,135)
 	
-	#misc.imsave('Test/Resultados/otsu7.tif',th2)
-	#misc.imsave('Test/Resultados/prebilateral.tif',blur)
+	#cv.imwrite('Test/Resultados/otsu7.tif',th2)
+	#cv.imwrite('Test/Resultados/prebilateral.tif',blur)
 
 	x = np.arange(0,256,1)	#se generan los valores 'x' de la grafica 
 	x1 = np.arange(0,int(media),1)	#se generan los valores 'x' de la grafica 
